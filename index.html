@@ -163,6 +163,26 @@
   .card .save{flex:0 0 auto;background:linear-gradient(180deg,#2c4269,#1d2c48);color:#f0e6cf;border:none;border-radius:9px;padding:11px 12px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;}
   .card .save:active{filter:brightness(.9);}
   .empty{max-width:560px;margin:40px auto;text-align:center;color:#c9b489;font-style:italic;}
+  /* Historic (read-only) signatories */
+  .histhead{max-width:560px;margin:34px auto 4px;display:flex;align-items:center;gap:14px;color:#e8c877;font-size:20px;font-weight:700;letter-spacing:.02em;text-align:center;justify-content:center;}
+  .histhead .hrule{flex:1;height:1px;background:linear-gradient(90deg,transparent,#8a6d3b);}
+  .histhead .hrule:last-child{background:linear-gradient(90deg,#8a6d3b,transparent);}
+  .histsub{max-width:560px;margin:0 auto 16px;text-align:center;color:#b39a6b;font-style:italic;font-size:13px;}
+  .card.historic{
+    background:linear-gradient(180deg,#e7d3a6,#d8c088);
+    border-color:#a98d55;filter:sepia(.12);box-shadow:0 4px 12px rgba(0,0,0,.3);
+  }
+  .card.historic .av{background:#cdb377;border-color:#a98d55;}
+  .card.historic .nm{color:#3a2814;}
+  .card.historic .rsn{white-space:normal;color:#6e5426;}
+  .seal{
+    flex:0 0 auto;width:46px;height:46px;border-radius:50%;
+    background:radial-gradient(circle at 40% 35%,#a23a3a,#701f1f);
+    color:#f0d9b0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    font-size:15px;line-height:1;box-shadow:inset 0 1px 2px rgba(255,255,255,.3),0 2px 5px rgba(0,0,0,.35);
+    border:1px solid #5c1818;
+  }
+  .seal span{font-size:8px;letter-spacing:.02em;margin-top:2px;opacity:.9;}
   .listtools{max-width:560px;margin:4px auto 22px;display:flex;gap:10px;}
   .listtools .btn{margin:0;flex:1;}
   .del{background:none;border:none;color:#b07070;font-size:12px;text-decoration:underline;cursor:pointer;font-family:inherit;}
@@ -318,6 +338,30 @@ var DECLS = [
     ],
     sig:"— Long may this Signature wave —"
   }
+];
+
+/* ---------- The Original Signatories (read-only gag list) ---------- */
+var SEED_SIGNATORIES = [
+  // The real famous signers
+  {av:"🖋", name:"John Hancock", year:"1776", reason:"Signed first, signed biggest. Independence from anyone who can't read my name from orbit."},
+  {av:"📜", name:"Thomas Jefferson", year:"1776", reason:"Wrote the whole thing. Declaring independence from writer's block."},
+  {av:"🪁", name:"Benjamin Franklin", year:"1776", reason:"Independence from staying in on a Saturday. Also, I basically invented the wingman."},
+  {av:"⚖️", name:"John Adams", year:"1776", reason:"Independence from being the least famous Adams."},
+  {av:"🍺", name:"Samuel Adams", year:"1776", reason:"Independence, liberty, and a beer named after me."},
+  {av:"🎯", name:"Roger Sherman", year:"1776", reason:"Only man to sign all four founding documents. Independence from FOMO."},
+  {av:"🩺", name:"Benjamin Rush", year:"1776", reason:"Independence from bad bar medicine and worse hangovers."},
+  {av:"🎓", name:"John Witherspoon", year:"1776", reason:"Independence, ratified and blessed by the Reverend himself."},
+  {av:"🔘", name:"Button Gwinnett", year:"1776", reason:"Independence from everyone asking about my first name."},
+  {av:"✝️", name:"Charles Carroll", year:"1776", reason:"Last surviving signer. Declaring independence from ever showing up early."},
+  // The gag cameos
+  {av:"🥃", name:"Jon Hamm", year:"est.", reason:"Declaring independence from being called John Hancock."},
+  {av:"🍒", name:"George Washington", year:"1789", reason:"Cannot tell a lie — I'm only here for the phone numbers."},
+  {av:"🧵", name:"Betsy Ross", year:"1776", reason:"Sewed the whole flag. Declaring independence from unpaid overtime."},
+  {av:"🐎", name:"Paul Revere", year:"1775", reason:"One if by land, two if she texts back."},
+  {av:"🎩", name:"Uncle Sam", year:"1812", reason:"I WANT YOU… to sign the declaration."},
+  {av:"🎩", name:"Abraham Lincoln", year:"1863", reason:"Four score and seven numbers ago…"},
+  {av:"🐍", name:"Cleopatra", year:"51 BC", reason:"Declaring independence from thoroughly mediocre suitors."},
+  {av:"🎖", name:"Napoleon", year:"1804", reason:"Declaring independence — and yes, I am tall enough for this bar."}
 ];
 
 var STORE_KEY = "declaration_signatures_v1";
@@ -486,28 +530,45 @@ function fmtDate(iso){
 }
 function renderList(){
   var all=getAll().slice().reverse();
-  var body=document.getElementById('listBody');
   var count=document.getElementById('listCount');
   var tools=document.getElementById('listTools');
-  count.textContent=all.length+(all.length===1?" signature":" signatures")+" collected";
+  count.textContent=all.length+(all.length===1?" signature":" signatures")+" collected tonight";
   tools.style.display=all.length?'flex':'none';
-  if(!all.length){ body.innerHTML='<div class="empty">No one has declared independence yet.<br>The night is young. 🍸</div>'; return; }
+
   var html="";
-  for(var i=0;i<all.length;i++){
-    var s=all[i];
-    var av=s.photo?'<img class="av" src="'+s.photo+'">':'<div class="av">👤</div>';
-    var det=[];
-    if(s.phone) det.push('<b>📞 '+escHtml(s.phone)+'</b>');
-    if(s.insta) det.push('<b>📸 @'+escHtml(s.insta)+'</b>');
-    html+='<div class="card">'+av+
-      '<div class="meta"><div class="nm">'+escHtml(s.name)+'</div>'+
-      '<div class="dt">'+det.join(' &nbsp;·&nbsp; ')+'</div>'+
-      (s.reason?'<div class="rsn">“'+escHtml(s.reason)+'”</div>':'')+
-      '<div class="dt" style="opacity:.7">'+fmtDate(s.date)+'</div></div>'+
-      '<button class="save" onclick="saveOne('+s.id+')">📇 Save</button></div>';
+  // --- Tonight's real signatures ---
+  if(!all.length){
+    html+='<div class="empty">No one has declared independence yet tonight.<br>The night is young. 🍸</div>';
+  } else {
+    for(var i=0;i<all.length;i++){
+      var s=all[i];
+      var av=s.photo?'<img class="av" src="'+s.photo+'">':'<div class="av">👤</div>';
+      var det=[];
+      if(s.phone) det.push('<b>📞 '+escHtml(s.phone)+'</b>');
+      if(s.insta) det.push('<b>📸 @'+escHtml(s.insta)+'</b>');
+      html+='<div class="card">'+av+
+        '<div class="meta"><div class="nm">'+escHtml(s.name)+'</div>'+
+        '<div class="dt">'+det.join(' &nbsp;·&nbsp; ')+'</div>'+
+        (s.reason?'<div class="rsn">“'+escHtml(s.reason)+'”</div>':'')+
+        '<div class="dt" style="opacity:.7">'+fmtDate(s.date)+'</div></div>'+
+        '<button class="save" onclick="saveOne('+s.id+')">📇 Save</button></div>';
+    }
+    html+='<div class="footlink"><button onclick="wipe()">Clear tonight\'s signatures</button></div>';
   }
-  html+='<div class="footlink"><button onclick="wipe()">Clear all signatures</button></div>';
-  body.innerHTML=html;
+
+  // --- The Original Signatories (read-only gag list) ---
+  html+='<div class="histhead"><span class="hrule"></span>The Original Signatories<span class="hrule"></span></div>';
+  html+='<p class="histsub">In Congress, July IV, MDCCLXXVI — those who declared before you</p>';
+  for(var j=0;j<SEED_SIGNATORIES.length;j++){
+    var h=SEED_SIGNATORIES[j];
+    html+='<div class="card historic">'+
+      '<div class="av">'+h.av+'</div>'+
+      '<div class="meta"><div class="nm">'+escHtml(h.name)+'</div>'+
+      '<div class="rsn">“'+escHtml(h.reason)+'”</div></div>'+
+      '<div class="seal">✦<span>'+escHtml(h.year)+'</span></div></div>';
+  }
+
+  document.getElementById('listBody').innerHTML=html;
 }
 function saveOne(id){
   var all=getAll();
